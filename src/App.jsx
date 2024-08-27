@@ -1,72 +1,40 @@
-import { useState, useEffect } from 'react'
-import {TodoProvider} from './contexts'
-import './App.css'
-import TodoForm from './components/TodoForm'
-import TodoItem from './components/TodoItem'
+import Home from "./pages/home";
+import Login from "./pages/login";
+import Register from "./pages/register";
+import "./style.scss";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "./context/AuthContext";
 
 function App() {
-  const [todos, setTodos] = useState([])
+  const { currentUser } = useContext(AuthContext);
 
-  const addTodo = (todo) => {
-    setTodos((prev) => [{id: Date.now(), ...todo}, ...prev] )
-  }
-
-  const updateTodo = (id, todo) => {
-    setTodos((prev) => prev.map((prevTodo) => (prevTodo.id === id ? todo : prevTodo )))
-
-    
-  }
-
-  const deleteTodo = (id) => {
-    setTodos((prev) => prev.filter((todo) => todo.id !== id))
-  }
-
-  const toggleComplete = (id) => {
-    //console.log(id);
-    setTodos((prev) => 
-    prev.map((prevTodo) => 
-      prevTodo.id === id ? { ...prevTodo, 
-        completed: !prevTodo.completed } : prevTodo))
-  }
-
-  useEffect(() => {
-    const todos = JSON.parse(localStorage.getItem("todos"))
-
-    if (todos && todos.length > 0) {
-      setTodos(todos)
+  const ProtectedRoute = ({ children }) => {
+    if (!currentUser) {
+      return <Navigate to="/login" />;
     }
-  }, [])
 
-  useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos))
-  }, [todos])
-  
-
-
+    return children
+  };
 
   return (
-    <TodoProvider value={{todos, addTodo, updateTodo, deleteTodo, toggleComplete}}>
-      <div className="bg-[#172842] min-h-screen py-8">
-                <div className="w-full max-w-2xl mx-auto shadow-md rounded-lg px-4 py-3 text-white">
-                    <h1 className="text-2xl font-bold text-center mb-8 mt-2">Manage Your Todos</h1>
-                    <div className="mb-4">
-                        {/* Todo form goes here */} 
-                        <TodoForm />
-                    </div>
-                    <div className="flex flex-wrap gap-y-3">
-                        {/*Loop and Add TodoItem here */}
-                        {todos.map((todo) => (
-                          <div key={todo.id}
-                          className='w-full'
-                          >
-                            <TodoItem todo={todo} />
-                          </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-    </TodoProvider>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/">
+          <Route
+            index
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
